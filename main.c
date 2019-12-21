@@ -1,7 +1,7 @@
 //Hex-Rom
 //-Aminotreal
 #include <stdio.h>	//printf, main()
-//#include <stdlib.h>	//malloc
+//#include <stdlib.h>	//malloc exit()
 #include <time.h>	//for clock()
 
 struct comparator{
@@ -17,36 +17,37 @@ int FindSequence(int filled, int (*Array)[16], int *sequence);
 
 int main(void){
 	int numbers[] = { 119, 18, 93, 91, 58, 107, 111, 82, 127, 123, 0 , 0, 0, 0, 0, 0};
+	FILE *file = NULL;
 	//carried across from old program ^
-	
 	
 	
 	//int sub_sequence[16] = {1,1,1,1,1,0,0,1,1,1,0};//also both sequence if !dualoutput
 	//int inv_sequence[16] = {0,0,1,1,1,1,1,0,0,0,0};
-	int sub_sequence[16] = {1,0,0,0,1,1,1,0,1,1,0};
-	int inv_sequence[16] = {1,1,1,1,1,0,0,1,1,1,0};
+	int sub_sequence[16] = {0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1};
+	
+	int inv_sequence[16] = {1,1,0,0,0,0,0,1,0,0,0,0,1,1,1,1};
 	
 	clock_t start = clock();
 	clock_t end = clock();
-	clock_t total = clock();
-	
+	//clock_t total = clock();
 	enum {//Settings
-	size            = 11,	//How many ss values we care about of the output seqeunce
+	size            = 16,	//How many ss values we care about of the output seqeunce
 	depth           = 3,	//layers of memory
-	invert_input    = 1,	//If inverted input is allowed
+	all_inv_in      = 0,	//If testing for all inv in
+	invert_input    = 0,	//prints only with invert_input inv in value
 	do_binary       = 1,	//if a repeater is on the output(if output > 1 output = 1)
 	dual_output     = 0,	//Both sequences or not
-	ored2_output    = 0,	//Outputs Ored. Incompatible with !dual_output
-	print_inv       = 0,	//prints only with print_inv inv in value (0 = disabled)
+	ored2_output    = 0,	//Outputs Ored. for dual sequence
 	invert_output   = 0,	//Required sequence = max(invert_output - sequence, 0)
-	seq_from_number = 1,	//If you want to generate the sequence from the numbers
+	seq_from_number = 0,	//If you want to generate the sequence from the numbers
 	seg1            = 0,
-	seg2            = 4
+	seg2            = 4,
+	print_to_file 	= 1,	//if it should print to a file
+	temp            = 0
 	};	//End of settings
 	
-	if (depth == 0){
-		printf("Error: Depth\n");
-		exit(1);
+	if (print_to_file){
+		file = fopen("Output.txt", "w");
 	}
 	
 	if (seq_from_number){	//set sequences to numbers[] segment position seg1, seg2
@@ -67,15 +68,16 @@ int main(void){
 		}
 	}
 	
+	//Pre-Generate comp1(sub comp) Cypher
 	int Sub_Cypher[32][16] = {0}, Sub_used = 0;
 	struct comparator Sub_Furnace[32];//30
-	for (int mode = 0; mode <=1; ++mode){									//Pre-Generate comp1(sub comp) Cypher
+	for (int mode = 0; mode <=1; ++mode){
 		for (int subSS = 0; subSS < 16; ++subSS){
 			int sequence[16];
 			for (int input = 0; input < 16; ++input){
 				int output = 0;
-				if (mode) output = input >= subSS ? input : 0;				//comp1 compare mode
-				else output = input >= subSS ? input - subSS : 0;			//comp1 subtract mode
+				if (mode) output = input >= subSS ? input : 0;//comp1 compare mode
+				else output = input >= subSS ? input - subSS : 0;//comp1 subtract mode
 				sequence[input] = output;
 			}
 			int found = FindSequence(Sub_used, Sub_Cypher, sequence);
@@ -89,15 +91,16 @@ int main(void){
 		}
 	}
 	
+	//Pre-Generate comp2(inv comp) Cypher
 	int Inv_Cypher[32][16] = {0}, Inv_used = 0;
 	struct comparator Inv_Furnace[32];//31
-	for (int mode = 0; mode <=1; ++mode){									//Pre-Generate comp2(inv comp) Cypher
+	for (int mode = 0; mode <=1; ++mode){
 		for (int invSS = 0; invSS < 16; ++invSS){
 			int sequence[16];
 			for (int input = 0; input < 16; ++input){
 				int output = 0;
-				if (mode) output = invSS >= input ? invSS : 0;				//comp2 compare mode
-				else output = invSS >= input ? invSS - input : 0;			//comp2 subtract mode
+				if (mode) output = invSS >= input ? invSS : 0;//comp2 compare mode
+				else output = invSS >= input ? invSS - input : 0;//comp2 subtract mode
 				sequence[input] = output;
 			}
 			int found = FindSequence(Inv_used, Inv_Cypher, sequence);
@@ -111,9 +114,10 @@ int main(void){
 		}
 	}
 	
+	//Pre-Generate layer Cypher
 	int Layer_Cypher[739][16], Layer_used = 0;
 	struct layer Layer_Furnace[739];//739
-	for (int comp1 = 0; comp1 < Sub_used; ++comp1){				//Pre-Generate layer Cypher
+	for (int comp1 = 0; comp1 < Sub_used; ++comp1){	
 		for (int comp2 = 0; comp2 < Inv_used; ++comp2){
 			int sequence[16];
 			for (int input = 0; input < 16; ++input){
@@ -133,18 +137,17 @@ int main(void){
 			}
 		}
 	}
-	
 	enum {types = 3 + depth - 1};	//how many digits(types) in permutation
 	
 	int Memory_Layout[types] = {0}, Layout_used = 0;
 	Memory_Layout[Layout_used++] = Inv_used - 1;//inv out
 	Memory_Layout[Layout_used++] = Sub_used - 1;//sub_out
-	Memory_Layout[Layout_used++] = invert_input ? (Inv_used-1) : 0;//inv in
+	Memory_Layout[Layout_used++] = all_inv_in ? (Inv_used-1) : 0;//inv in
 	for (int layer = 1; layer < depth; ++layer)
 		Memory_Layout[Layout_used++] =  Layer_used - 1;//layers past 1(if 1 only user sub_out and inv_out)
 	
-	int tested = 0;
 	int millions = 0;
+	int tested = 0;
 	for (int permutation[types] = {0}; normalize(permutation, Memory_Layout, types) ;++permutation[0]){//for each memory layout
 		enum {inv_out, sub_out, inv_in, layers};
 		//for (int i = 0; i < types; ++i)printf("%d ", permutation[i]);putchar('\n');			//Print permutation
@@ -154,22 +157,33 @@ int main(void){
 			int wire = input;
 			if (permutation[inv_in])
 				wire = Inv_Cypher[permutation[inv_in]][input];
+			if (!all_inv_in && invert_input)
+				wire = invert_input - input >= 0 ? invert_input - input : 0;
+			
 			for (int layer = 0; layer < depth - 1; ++layer)
 				wire = Layer_Cypher[permutation[layers + layer]][wire];
 			int out1 = Sub_Cypher[permutation[sub_out]][wire];
 			int out2 = Inv_Cypher[permutation[inv_out]][wire];
+			
+			if (ored2_output){
+				if (out1 > 1) out2 = out1 - 1;
+				if (out2 > 1) out1 = out2 - 1;
+			}
+			if (temp){
+				if (out1 > 0) out1 = out1 - 1;
+				out2 = out2 - 2;
+				if (out2 < 0) out2 = 0;
+			}
 			int output = out1 > out2 ? out1 : out2;
 			
 			if (!dual_output){
-				if (do_binary && output > 1) output = 1;
+				if (do_binary && output > 1){
+					output = 1;
+				}
 				if (output != sub_sequence[input])
 					fail = 1;
 			}
 			else{
-				if (ored2_output){
-					if (out1 > 1) out2 = out1 - 1;
-					if (out2 > 1) out1 = out2 - 1;
-				}
 				if (do_binary){
 					if (out1) out1 = 1;
 					if (out2) out2 = 1;
@@ -179,36 +193,55 @@ int main(void){
 			}
 		}
 		if (!fail){
-			if (Inv_Furnace[permutation[inv_in]].ss == print_inv || !print_inv){
-				if (Inv_Furnace[permutation[inv_in]].ss == 12){
+			if (all_inv_in)
 				printf("InvIN: %d",  Inv_Furnace[permutation[inv_in]].ss);
-				printf(",%d  ",      Inv_Furnace[permutation[inv_in]].mode);
+			else
+				printf("InvIN: %d",  invert_input);
+			printf(",%d  ",      Inv_Furnace[permutation[inv_in]].mode);
+			for (int layer = 0; layer < depth - 1; ++layer){
+				printf("Sub: %d", Layer_Furnace[permutation[layers + layer]].sub.ss);
+				printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].sub.mode);
+				printf("Inv: %d", Layer_Furnace[permutation[layers + layer]].inv.ss);
+				printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].inv.mode);
+			}
+			printf("SubOUT: %d", Sub_Furnace[permutation[sub_out]].ss);
+			printf(",%d  ",      Sub_Furnace[permutation[sub_out]].mode);
+			printf("InvOUT: %d", Inv_Furnace[permutation[inv_out]].ss);
+			printf(",%d\n",      Inv_Furnace[permutation[inv_out]].mode);
+			
+			if (print_to_file){
+				putc(Inv_Furnace[permutation[inv_in]].mode ? '*' : ' ', file);
+				if (all_inv_in)
+					fprintf(file, "%d ",  Inv_Furnace[permutation[inv_in]].ss);
+				else
+					fprintf(file, "%d ",  invert_input);
 				for (int layer = 0; layer < depth - 1; ++layer){
-					printf("Sub: %d", Layer_Furnace[permutation[layers + layer]].sub.ss);
-					printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].sub.mode);
-					printf("Inv: %d", Layer_Furnace[permutation[layers + layer]].inv.ss);
-					printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].inv.mode);
+					putc(Layer_Furnace[permutation[layers + layer]].sub.mode ? '*' : ' ', file);
+					fprintf(file, "%-2d,", Layer_Furnace[permutation[layers + layer]].sub.ss);
+					putc(Layer_Furnace[permutation[layers + layer]].inv.mode ? '*' : ' ', file);
+					fprintf(file, "%-2d ", Layer_Furnace[permutation[layers + layer]].inv.ss);
 				}
-				printf("SubOUT: %d", Sub_Furnace[permutation[sub_out]].ss);
-				printf(",%d  ",      Sub_Furnace[permutation[sub_out]].mode);
-				printf("InvOUT: %d", Inv_Furnace[permutation[inv_out]].ss);
-				printf(",%d\n",      Inv_Furnace[permutation[inv_out]].mode);
-				}
+				putc(Sub_Furnace[permutation[sub_out]].mode ? '*' : ' ', file);
+				fprintf(file, "%-2d,", Sub_Furnace[permutation[sub_out]].ss);
+				putc(Inv_Furnace[permutation[inv_out]].mode ? '*' : ' ', file);
+				fprintf(file, "%-2d\n", Inv_Furnace[permutation[inv_out]].ss);
 			}
 		}
 		if (tested == 100000000){
-			end = clock();
 			tested = 0;
+			end = clock();
 			//printf("time: %f\n", (float)(end - total)/CLOCKS_PER_SEC);//accumulative time
 			printf("time: %f ", (float)(end - start)/CLOCKS_PER_SEC);//time since last
 			printf("Millions: %d00\n", millions);
-			++millions;
 			start = clock();
+			millions++;
 		}
 		tested++;
 	}
-	printf("Tested: %d%d\n", millions, tested);
+	printf("Tested: %d%08d\n", millions, tested);
 	printf("\a"); //ding?
+	
+	if (!file) fclose(file);
 }
 inline int normalize(int *permutation, int *options, int types){
 	int i = 0;
