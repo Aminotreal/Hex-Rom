@@ -17,28 +17,30 @@ int FindSequence(int filled, int (*Array)[16], int *sequence);
 
 int main(void){
 	int numbers[] = { 119, 18, 93, 91, 58, 107, 111, 82, 127, 123, 0 , 0, 0, 0, 0, 0};
-	FILE *file = NULL;
 	//carried across from old program ^
+	
+	FILE *file = NULL;
 	
 	
 	//int sub_sequence[16] = {1,1,1,1,1,0,0,1,1,1,0};//also both sequence if !dualoutput
 	//int inv_sequence[16] = {0,0,1,1,1,1,1,0,0,0,0};
-	int sub_sequence[16] = {0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1};
 	
+	//Sub sequence is the main sequence if single output
+	int sub_sequence[16] = {0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1};
 	int inv_sequence[16] = {1,1,0,0,0,0,0,1,0,0,0,0,1,1,1,1};
 	
 	clock_t start = clock();
 	clock_t end = clock();
 	//clock_t total = clock();
 	enum {//Settings
-	size            = 16,	//How many ss values we care about of the output seqeunce
-	depth           = 3,	//layers of memory
+	size            = 16,	//First n sequence values defined (last can be anything)
+	depth           = 3,	//How many layers of memory
 	all_inv_in      = 0,	//If testing for all inv in
-	invert_input    = 0,	//prints only with invert_input inv in value
-	do_binary       = 1,	//if a repeater is on the output(if output > 1 output = 1)
+	invert_input    = 0,	//What value the input is inverted by(0 = no inv in)
+	do_binary       = 1,	//If the sequences are hex or binary
 	dual_output     = 0,	//Both sequences or not
 	ored2_output    = 0,	//Outputs Ored. for dual sequence
-	invert_output   = 0,	//Required sequence = max(invert_output - sequence, 0)
+	invert_output   = 0,	//subtract sequence value from this (don't let it go negative)
 	seq_from_number = 0,	//If you want to generate the sequence from the numbers
 	seg1            = 0,
 	seg2            = 4,
