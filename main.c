@@ -26,7 +26,7 @@ int main(void){
 	//int inv_sequence[16] = {0,0,1,1,1,1,1,0,0,0,0};
 	
 	//Sub sequence is the main sequence if single output
-	int sub_sequence[16] = {0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1};
+	int sub_sequence[16] = {1,1,0,0,0,1,1,1,0,0,0,1,0,1,0,1};
 	int inv_sequence[16] = {1,1,0,0,0,0,0,1,0,0,0,0,1,1,1,1};
 	
 	clock_t start = clock();
@@ -44,7 +44,7 @@ int main(void){
 	seq_from_number = 0,	//If you want to generate the sequence from the numbers
 	seg1            = 0,
 	seg2            = 4,
-	print_to_file 	= 1,	//if it should print to a file
+	print_to_file 	= 0,	//if it should print to a file
 	temp            = 0
 	};	//End of settings
 	
@@ -157,7 +157,7 @@ int main(void){
 		for (int input = 0; input < size && !fail; ++input){//for each ss input simulate permutation
 		
 			int wire = input;
-			if (permutation[inv_in])
+			if (all_inv_in && permutation[inv_in])
 				wire = Inv_Cypher[permutation[inv_in]][input];
 			if (!all_inv_in && invert_input)
 				wire = invert_input - input >= 0 ? invert_input - input : 0;
