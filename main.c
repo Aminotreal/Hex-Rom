@@ -243,7 +243,7 @@ int main(void){
 	printf("Tested: %d%08d\n", millions, tested);
 	printf("\a"); //ding?
 	
-	if (!file) fclose(file);
+	if (file) fclose(file);
 }
 inline int normalize(int *permutation, int *options, int types){
 	int i = 0;
