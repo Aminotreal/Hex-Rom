@@ -168,8 +168,8 @@ int main(void){
 			int out2 = Inv_Cypher[permutation[inv_out]][wire];
 			
 			if (ored2_output){
-				if (out1 > 1) out2 = out1 - 1;
-				if (out2 > 1) out1 = out2 - 1;
+				if (out1 > out2) out2 = out1 - 1;
+				if (out2 > out1) out1 = out2 - 1;
 			}
 			if (temp){
 				if (out1 > 0) out1 = out1 - 1;
