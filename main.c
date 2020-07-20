@@ -19,7 +19,7 @@ struct furnaces{
 };
 void print_barrels(int depth, int *permutation, struct furnaces, int invert_input);
 void fprint_barrels(int depth, int *permutation, struct furnaces, int invert_input, FILE *);
-int normalize(int *permutation, int *options, int types);
+int next_permutation(int * restrict permutation, int * restrict options, int types);
 int find_sequence(int filled, int (*Array)[16], int *sequence);
 
 int main(void){
@@ -154,17 +154,18 @@ int main(void){
 	enum {types = 3 + depth - 1};	//how many digits(types) in permutation
 	
 	enum {inv_out, sub_out, inv_in, layers};
-	
 	int Permutation_Max[types] = {0};
 	Permutation_Max[inv_out] = Inv_used - 1;//inv out
 	Permutation_Max[sub_out] = Sub_used - 1;//sub_out
 	Permutation_Max[inv_in] = all_inv_in ? (Inv_used-1) : 0;//inv in
-	for (int layer = 0; layer < depth - 1; ++layer)
+	for (int layer = 0; layer < depth - 1; ++layer){
 		Permutation_Max[layers + layer] =  Layer_used - 1;//layers past 1
+	}
 	
 	int millions = 0;
 	int tested = 0;
-	for (int permutation[types] = {0}; normalize(permutation, Permutation_Max, types) ;++permutation[0]){//for each memory layout
+	int permutation[types] = {0};
+	do{
 		//for (int i = 0; i < types; ++i)printf("%d ", permutation[i]);putchar('\n');			//Print permutation
 		int fail = 0;
 		for (int input = 0; input < size && !fail; ++input){//for each ss input simulate permutation
@@ -215,14 +216,15 @@ int main(void){
 			millions++;
 		}
 		tested++;
-	}
+	} while (next_permutation(permutation, Permutation_Max, types));
+	
 	printf("Tested: %d%08d\n", millions, tested);
 	printf("\a"); //ding?
 	
 	if (file) fclose(file);
 }
-
-inline int normalize(int *permutation, int *options, int types){
+int next_permutation(int * restrict permutation, int * restrict options, int types){
+	permutation[0]++;
 	int i = 0;
 	for (;permutation[i] > options[i] && i < (types - 1);){
 		permutation[i] = 0;
