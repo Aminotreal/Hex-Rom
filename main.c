@@ -253,10 +253,7 @@ inline int normalize(int *permutation, int *options, int types){
 	}
 	//return ((unsigned)(permutation[i] - 1 - options[i]) & (1<<31)) >> 31;
 	//return !(permutation[i] > options[i]);
-	//return permutation[i] <= options[i];
-	if (permutation[i] > options[i])
-		return 0;
-	else return 1;
+	return permutation[i] <= options[i];
 }
 int FindSequence(int filled, int (*Array)[16], int * restrict sequence){
 	int found = 0;
