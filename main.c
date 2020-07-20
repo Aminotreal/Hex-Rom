@@ -13,7 +13,7 @@ struct layer{
 	struct comparator inv;
 };
 int normalize(int *permutation, int *options, int types);
-int FindSequence(int filled, int (*Array)[16], int *sequence);
+int find_sequence(int filled, int (*Array)[16], int *sequence);
 
 int main(void){
 	int numbers[] = { 119, 18, 93, 91, 58, 107, 111, 82, 127, 123, 0 , 0, 0, 0, 0, 0};
@@ -82,7 +82,7 @@ int main(void){
 				else output = input >= subSS ? input - subSS : 0;//comp1 subtract mode
 				sequence[input] = output;
 			}
-			int found = FindSequence(Sub_used, Sub_Cypher, sequence);
+			int found = find_sequence(Sub_used, Sub_Cypher, sequence);
 			if (!found){
 				for (int i = 0; i < 16; ++i)
 					Sub_Cypher[Sub_used][i] = sequence[i];
@@ -105,7 +105,7 @@ int main(void){
 				else output = invSS >= input ? invSS - input : 0;//comp2 subtract mode
 				sequence[input] = output;
 			}
-			int found = FindSequence(Inv_used, Inv_Cypher, sequence);
+			int found = find_sequence(Inv_used, Inv_Cypher, sequence);
 			if (!found){
 				for (int i = 0; i < 16; ++i)
 					Inv_Cypher[Inv_used][i] = sequence[i];
@@ -127,7 +127,7 @@ int main(void){
 				int out2 = Inv_Cypher[comp2][input];
 				sequence[input] = out1 > out2 ? out1 : out2;
 			}
-			int found = FindSequence(Layer_used, Layer_Cypher, sequence);
+			int found = find_sequence(Layer_used, Layer_Cypher, sequence);
 			if (!found){
 				for (int i = 0; i < 16; ++i)
 					Layer_Cypher[Layer_used][i] = sequence[i];
@@ -256,7 +256,7 @@ inline int normalize(int *permutation, int *options, int types){
 	//return !(permutation[i] > options[i]);
 	return permutation[i] <= options[i];
 }
-int FindSequence(int filled, int (*Array)[16], int * restrict sequence){
+int find_sequence(int filled, int (*Array)[16], int * restrict sequence){
 	int found = 0;
 	for (int i = 0; (i < filled) && (!found); ++i){
 		int unique = 0;
