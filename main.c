@@ -141,17 +141,18 @@ int main(void){
 	}
 	enum {types = 3 + depth - 1};	//how many digits(types) in permutation
 	
-	int Memory_Layout[types] = {0}, Layout_used = 0;
-	Memory_Layout[Layout_used++] = Inv_used - 1;//inv out
-	Memory_Layout[Layout_used++] = Sub_used - 1;//sub_out
-	Memory_Layout[Layout_used++] = all_inv_in ? (Inv_used-1) : 0;//inv in
-	for (int layer = 1; layer < depth; ++layer)
-		Memory_Layout[Layout_used++] =  Layer_used - 1;//layers past 1(if 1 only user sub_out and inv_out)
+	enum {inv_out, sub_out, inv_in, layers};
+	
+	int Permutation_Max[types] = {0};
+	Permutation_Max[inv_out] = Inv_used - 1;//inv out
+	Permutation_Max[sub_out] = Sub_used - 1;//sub_out
+	Permutation_Max[inv_in] = all_inv_in ? (Inv_used-1) : 0;//inv in
+	for (int layer = 0; layer < depth - 1; ++layer)
+		Permutation_Max[layers + layer] =  Layer_used - 1;//layers past 1
 	
 	int millions = 0;
 	int tested = 0;
-	for (int permutation[types] = {0}; normalize(permutation, Memory_Layout, types) ;++permutation[0]){//for each memory layout
-		enum {inv_out, sub_out, inv_in, layers};
+	for (int permutation[types] = {0}; normalize(permutation, Permutation_Max, types) ;++permutation[0]){//for each memory layout
 		//for (int i = 0; i < types; ++i)printf("%d ", permutation[i]);putchar('\n');			//Print permutation
 		int fail = 0;
 		for (int input = 0; input < size && !fail; ++input){//for each ss input simulate permutation
