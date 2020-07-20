@@ -12,6 +12,13 @@ struct layer{
 	struct comparator sub;
 	struct comparator inv;
 };
+struct furnaces{
+	struct comparator *Sub_Furnace;//30
+	struct comparator *Inv_Furnace;//31
+	struct layer *Layer_Furnace;//739
+};
+void print_barrels(int depth, int *permutation, struct furnaces, int invert_input);
+void fprint_barrels(int depth, int *permutation, struct furnaces, int invert_input, FILE *);
 int normalize(int *permutation, int *options, int types);
 int find_sequence(int filled, int (*Array)[16], int *sequence);
 
@@ -139,6 +146,11 @@ int main(void){
 			}
 		}
 	}
+	struct furnaces Furnaces;
+	Furnaces.Sub_Furnace = Sub_Furnace;
+	Furnaces.Inv_Furnace = Inv_Furnace;
+	Furnaces.Layer_Furnace = Layer_Furnace;
+	
 	enum {types = 3 + depth - 1};	//how many digits(types) in permutation
 	
 	enum {inv_out, sub_out, inv_in, layers};
@@ -156,13 +168,11 @@ int main(void){
 		//for (int i = 0; i < types; ++i)printf("%d ", permutation[i]);putchar('\n');			//Print permutation
 		int fail = 0;
 		for (int input = 0; input < size && !fail; ++input){//for each ss input simulate permutation
-		
 			int wire = input;
 			if (all_inv_in && permutation[inv_in])
 				wire = Inv_Cypher[permutation[inv_in]][input];
 			if (!all_inv_in && invert_input)
 				wire = invert_input - input >= 0 ? invert_input - input : 0;
-			
 			for (int layer = 0; layer < depth - 1; ++layer)
 				wire = Layer_Cypher[permutation[layers + layer]][wire];
 			int out1 = Sub_Cypher[permutation[sub_out]][wire];
@@ -172,13 +182,7 @@ int main(void){
 				if (out1 > out2) out2 = out1 - 1;
 				if (out2 > out1) out1 = out2 - 1;
 			}
-			if (temp){
-				if (out1 > 0) out1 = out1 - 1;
-				out2 = out2 - 2;
-				if (out2 < 0) out2 = 0;
-			}
 			int output = out1 > out2 ? out1 : out2;
-			
 			if (!dual_output){
 				if (do_binary && output > 1){
 					output = 1;
@@ -196,44 +200,15 @@ int main(void){
 			}
 		}
 		if (!fail){
-			if (all_inv_in)
-				printf("InvIN: %d",  Inv_Furnace[permutation[inv_in]].ss);
-			else
-				printf("InvIN: %d",  invert_input);
-			printf(",%d  ",      Inv_Furnace[permutation[inv_in]].mode);
-			for (int layer = 0; layer < depth - 1; ++layer){
-				printf("Sub: %d", Layer_Furnace[permutation[layers + layer]].sub.ss);
-				printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].sub.mode);
-				printf("Inv: %d", Layer_Furnace[permutation[layers + layer]].inv.ss);
-				printf(",%d  ",   Layer_Furnace[permutation[layers + layer]].inv.mode);
-			}
-			printf("SubOUT: %d", Sub_Furnace[permutation[sub_out]].ss);
-			printf(",%d  ",      Sub_Furnace[permutation[sub_out]].mode);
-			printf("InvOUT: %d", Inv_Furnace[permutation[inv_out]].ss);
-			printf(",%d\n",      Inv_Furnace[permutation[inv_out]].mode);
-			
+			print_barrels(depth, permutation, Furnaces, invert_input);
 			if (print_to_file){
-				putc(Inv_Furnace[permutation[inv_in]].mode ? '*' : ' ', file);
-				if (all_inv_in)
-					fprintf(file, "%d ",  Inv_Furnace[permutation[inv_in]].ss);
-				else
-					fprintf(file, "%d ",  invert_input);
-				for (int layer = 0; layer < depth - 1; ++layer){
-					putc(Layer_Furnace[permutation[layers + layer]].sub.mode ? '*' : ' ', file);
-					fprintf(file, "%-2d,", Layer_Furnace[permutation[layers + layer]].sub.ss);
-					putc(Layer_Furnace[permutation[layers + layer]].inv.mode ? '*' : ' ', file);
-					fprintf(file, "%-2d ", Layer_Furnace[permutation[layers + layer]].inv.ss);
-				}
-				putc(Sub_Furnace[permutation[sub_out]].mode ? '*' : ' ', file);
-				fprintf(file, "%-2d,", Sub_Furnace[permutation[sub_out]].ss);
-				putc(Inv_Furnace[permutation[inv_out]].mode ? '*' : ' ', file);
-				fprintf(file, "%-2d\n", Inv_Furnace[permutation[inv_out]].ss);
+				fprint_barrels(depth, permutation, Furnaces, invert_input, file);
 			}
 		}
 		if (tested == 100000000){
 			tested = 0;
 			end = clock();
-			//printf("time: %f\n", (float)(end - total)/CLOCKS_PER_SEC);//accumulative time
+			//printf("time: %f ", (float)(end - total)/CLOCKS_PER_SEC);//accumulative time
 			printf("time: %f ", (float)(end - start)/CLOCKS_PER_SEC);//time since last
 			printf("Millions: %d00\n", millions);
 			start = clock();
@@ -246,6 +221,7 @@ int main(void){
 	
 	if (file) fclose(file);
 }
+
 inline int normalize(int *permutation, int *options, int types){
 	int i = 0;
 	for (;permutation[i] > options[i] && i < (types - 1);){
@@ -268,4 +244,48 @@ int find_sequence(int filled, int (*Array)[16], int * restrict sequence){
 			found = 1;
 	}
 	return found;
+}
+void print_barrels(int depth, int *permutation, struct furnaces Furnaces, int invert_input){
+	enum {inv_out, sub_out, inv_in, layers};
+	struct comparator *Sub_Furnace = Furnaces.Sub_Furnace;
+	struct comparator *Inv_Furnace = Furnaces.Inv_Furnace;
+	struct layer *Layer_Furnace = Furnaces.Layer_Furnace;
+	
+	putchar(Inv_Furnace[permutation[inv_in]].mode ? '*' : ' ');
+	if (permutation[inv_in])
+		printf("%d ",  Inv_Furnace[permutation[inv_in]].ss);
+	else
+		printf("%d ",  invert_input);
+	for (int layer = 0; layer < depth - 1; ++layer){
+		putchar(Layer_Furnace[permutation[layers + layer]].sub.mode ? '*' : ' ');
+		printf("%X,", Layer_Furnace[permutation[layers + layer]].sub.ss);
+		putchar(Layer_Furnace[permutation[layers + layer]].inv.mode ? '*' : ' ');
+		printf("%X ", Layer_Furnace[permutation[layers + layer]].inv.ss);
+	}
+	putchar(Sub_Furnace[permutation[sub_out]].mode ? '*' : ' ');
+	printf("%X,", Sub_Furnace[permutation[sub_out]].ss);
+	putchar(Inv_Furnace[permutation[inv_out]].mode ? '*' : ' ');
+	printf("%X\n", Inv_Furnace[permutation[inv_out]].ss);
+}
+void fprint_barrels(int depth, int *permutation, struct furnaces Furnaces, int invert_input, FILE *file){
+	enum {inv_out, sub_out, inv_in, layers};
+	struct comparator *Sub_Furnace = Furnaces.Sub_Furnace;
+	struct comparator *Inv_Furnace = Furnaces.Inv_Furnace;
+	struct layer *Layer_Furnace = Furnaces.Layer_Furnace;
+	
+	putc(Inv_Furnace[permutation[inv_in]].mode ? '*' : ' ', file);
+	if (permutation[inv_in])
+		fprintf(file, "%d ",  Inv_Furnace[permutation[inv_in]].ss);
+	else
+		fprintf(file, "%d ",  invert_input);
+	for (int layer = 0; layer < depth - 1; ++layer){
+		putc(Layer_Furnace[permutation[layers + layer]].sub.mode ? '*' : ' ', file);
+		fprintf(file, "%X,", Layer_Furnace[permutation[layers + layer]].sub.ss);
+		putc(Layer_Furnace[permutation[layers + layer]].inv.mode ? '*' : ' ', file);
+		fprintf(file, "%X ", Layer_Furnace[permutation[layers + layer]].inv.ss);
+	}
+	putc(Sub_Furnace[permutation[sub_out]].mode ? '*' : ' ', file);
+	fprintf(file, "%X,", Sub_Furnace[permutation[sub_out]].ss);
+	putc(Inv_Furnace[permutation[inv_out]].mode ? '*' : ' ', file);
+	fprintf(file, "%X\n", Inv_Furnace[permutation[inv_out]].ss);
 }
